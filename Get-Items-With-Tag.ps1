@@ -177,6 +177,16 @@ function Invoke-EmbyGet {
     Invoke-RestMethod -Method GET -Uri $uri -Headers $script:Headers
 }
 
+function Normalize-MediaLocation {
+    param([string]$Path)
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return ""
+    }
+
+    return $Path -replace "\\", "/"
+}
+
 function Get-ItemMediaLocation {
     param([object]$Item)
 
@@ -186,10 +196,10 @@ function Get-ItemMediaLocation {
         $mediaLocation = Split-Path -Path $mediaPath -Parent
 
         if (-not [string]::IsNullOrWhiteSpace($mediaLocation)) {
-            return $mediaLocation
+            return Normalize-MediaLocation -Path $mediaLocation
         }
 
-        return $mediaPath
+        return Normalize-MediaLocation -Path $mediaPath
     }
 
     return ""
