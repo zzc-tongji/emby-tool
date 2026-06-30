@@ -177,12 +177,19 @@ function Invoke-EmbyGet {
     Invoke-RestMethod -Method GET -Uri $uri -Headers $script:Headers
 }
 
-function Get-ItemPath {
+function Get-ItemMediaLocation {
     param([object]$Item)
 
     $pathProperty = $Item.PSObject.Properties["Path"]
     if ($null -ne $pathProperty -and -not [string]::IsNullOrWhiteSpace([string]$Item.Path)) {
-        return [string]$Item.Path
+        $mediaPath = [string]$Item.Path
+        $mediaLocation = Split-Path -Path $mediaPath -Parent
+
+        if (-not [string]::IsNullOrWhiteSpace($mediaLocation)) {
+            return $mediaLocation
+        }
+
+        return $mediaPath
     }
 
     return ""
@@ -285,7 +292,7 @@ function ConvertTo-FriendlyText {
         if ($IncludeUrl) {
             $lines += "  Url: $($row.Url)"
         }
-        $lines += "  MediaPath: $($row.MediaPath)"
+        $lines += "  MediaLocation: $($row.MediaLocation)"
         $lines += ""
     }
 
@@ -307,7 +314,7 @@ function ConvertTo-MarkdownTable {
     )
 
     $lines += @(
-        "| Name | Id | Media Path |"
+        "| Name | Id | Media Location |"
         "| --- | --- | --- |"
     )
 
@@ -320,7 +327,7 @@ function ConvertTo-MarkdownTable {
         $lines += "| {0} | {1} | {2} |" -f `
             (Escape-MarkdownCell -Value $row.Name), `
             $idCell, `
-            (Escape-MarkdownCell -Value $row.MediaPath)
+            (Escape-MarkdownCell -Value $row.MediaLocation)
     }
 
     return $lines -join [Environment]::NewLine
@@ -423,7 +430,7 @@ $outputRows = @($items | ForEach-Object {
     $row = [ordered]@{
         Id        = $_.Id
         Name      = $_.Name
-        MediaPath = Get-ItemPath -Item $_
+        MediaLocation = Get-ItemMediaLocation -Item $_
     }
 
     if ($includeUrl) {
